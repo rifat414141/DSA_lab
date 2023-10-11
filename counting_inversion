@@ -1,0 +1,88 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+// Function to merge two sorted halves and count inversions
+long long mergeAndCountInversions(vector<int>& arr, int low, int mid, int high) {
+    int n1 = mid - low + 1;
+    int n2 = high - mid;
+
+    // Create temporary arrays to hold the two halves
+    vector<int> leftArr(n1);
+    vector<int> rightArr(n2);
+
+    // Copy data to temporary arrays leftArr[] and rightArr[]
+    for (int i = 0; i < n1; i++)
+        leftArr[i] = arr[low + i];
+    for (int j = 0; j < n2; j++)
+        rightArr[j] = arr[mid + 1 + j];
+
+    long long inversions = 0; // Initialize inversion count
+
+    int i = 0, j = 0, k = low; // Initialize indices for merging
+
+    // Merge the two halves back into the original array arr[]
+    while (i < n1 && j < n2) {
+        if (leftArr[i] <= rightArr[j]) {
+            arr[k] = leftArr[i];
+            i++;
+        } else {
+            // If arr[i] > arr[j], it's an inversion
+            arr[k] = rightArr[j];
+            j++;
+            inversions += n1 - i;
+        }
+        k++;
+    }
+
+    // Copy the remaining elements of leftArr[], if there are any
+    while (i < n1) {
+        arr[k] = leftArr[i];
+        i++;
+        k++;
+    }
+
+    // Copy the remaining elements of rightArr[], if there are any
+    while (j < n2) {
+        arr[k] = rightArr[j];
+        j++;
+        k++;
+    }
+
+    return inversions;
+}
+
+// Function to divide the array and recursively count inversions
+long long mergeSortAndCountInversions(vector<int>& arr, int low, int high) {
+    long long inversions = 0;
+
+    if (low < high) {
+        int mid = low + (high - low) / 2;
+
+        // Recursively count inversions in the left and right halves
+        inversions += mergeSortAndCountInversions(arr, low, mid);
+        inversions += mergeSortAndCountInversions(arr, mid + 1, high);
+
+        // Merge the two halves and count inversions
+        inversions += mergeAndCountInversions(arr, low, mid, high);
+    }
+
+    return inversions;
+}
+
+// Function to count inversions in an array
+long long countInversions(vector<int>& arr) {
+    return mergeSortAndCountInversions(arr, 0, arr.size() - 1);
+}
+
+int main() {
+    // Example usage
+    vector<int> arr = {1, 20, 6, 4, 5};
+
+    long long inversions = countInversions(arr);
+
+    cout << "Number of inversions: " << inversions << endl;
+
+    return 0;
+}
