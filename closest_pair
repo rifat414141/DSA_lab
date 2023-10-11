@@ -1,0 +1,99 @@
+#include <iostream>
+#include <cmath>
+#include <vector>
+#include <algorithm>
+#include <limits>
+
+using namespace std;
+
+// Represents a point with x and y coordinates
+struct Point {
+    double x, y;
+};
+
+// Calculate the Euclidean distance between two points
+double distance(const Point& p1, const Point& p2) {
+    return sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
+}
+
+// Brute-force method to find the closest pair of points
+pair<Point, Point> bruteForceClosestPair(vector<Point>& points, int low, int high) {
+    double minDist = numeric_limits<double>::max();
+    pair<Point, Point> closestPair;
+
+    for (int i = low; i < high; ++i) {
+        for (int j = i + 1; j < high; ++j) {
+            double dist = distance(points[i], points[j]);
+            if (dist < minDist) {
+                minDist = dist;
+                closestPair = {points[i], points[j]};
+            }
+        }
+    }
+
+    return closestPair;
+}
+
+// Recursive function to find the closest pair of points using a divide-and-conquer approach
+pair<Point, Point> findClosestPair(vector<Point>& points, int low, int high) {
+    if (high - low <= 3) {
+        // If there are 3 or fewer points, use brute-force
+        return bruteForceClosestPair(points, low, high);
+    }
+
+    int mid = (low + high) / 2;
+    pair<Point, Point> leftClosest = findClosestPair(points, low, mid);
+    pair<Point, Point> rightClosest = findClosestPair(points, mid, high);
+
+    // Find the minimum distance between the left and right halves
+    double minDist = min(distance(leftClosest.first, leftClosest.second),
+                         distance(rightClosest.first, rightClosest.second));
+
+    // Merge the two halves and check for points closer than minDist to the dividing line
+    vector<Point> strip;
+    for (int i = low; i < high; ++i) {
+        if (abs(points[i].x - points[mid].x) < minDist) {
+            strip.push_back(points[i]);
+        }
+    }
+
+    // Sort the strip by y-coordinate to simplify distance calculations
+    sort(strip.begin(), strip.end(), [](const Point& p1, const Point& p2) {
+        return p1.y < p2.y;
+    });
+
+    // Check for closer points in the strip
+    for (int i = 0; i < strip.size(); ++i) {
+        for (int j = i + 1; j < strip.size() && (strip[j].y - strip[i].y) < minDist; ++j) {
+            double dist = distance(strip[i], strip[j]);
+            if (dist < minDist) {
+                minDist = dist;
+                leftClosest = {strip[i], strip[j]};
+            }
+        }
+    }
+
+    return leftClosest;
+}
+
+// Function to find the closest pair of points
+pair<Point, Point> closestPair(vector<Point>& points) {
+    // Sort points by x-coordinate
+    sort(points.begin(), points.end(), [](const Point& p1, const Point& p2) {
+        return p1.x < p2.x;
+    });
+
+    return findClosestPair(points, 0, points.size());
+}
+
+int main() {
+    // Example usage
+    vector<Point> points = { {0, 0}, {1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5} };
+
+    pair<Point, Point> closest = closestPair(points);
+
+    cout << "Closest Pair: (" << closest.first.x << ", " << closest.first.y << ") and ("
+         << closest.second.x << ", " << closest.second.y << ")" << endl;
+
+    return 0;
+}
